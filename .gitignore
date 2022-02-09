@@ -1,0 +1,6 @@
+Build
+.vscode
+*.bak
+._*
+.DS_Store
+.buildenv
