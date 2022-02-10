@@ -35,9 +35,12 @@ emocrypt -d -i <input-file> -o <output-file>
 ## Building
 
 Requirements:
-    - c++ compiler with c++17 support
-    - cmake >= 3.15
-    - libsodium
+
+- c++ compiler with c++17 support
+- cmake >= 3.15
+- libsodium
+
+Build commands:
 
 ```
 cmake -DCMAKE_BUILD_TYPE=Release -B Build
