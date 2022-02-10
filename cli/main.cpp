@@ -3,6 +3,7 @@
 #include <common/format.h>
 #include <common/options.h>
 #include <common/term_echo.h>
+#include <common/version.h>
 #include <fstream>
 #include <termios.h>
 #include <unistd.h>
@@ -139,6 +140,7 @@ int main(int argc, char** argv)
     opt.add("decrypt", ec::ArgType::None, 'd');
     opt.add("encrypt", ec::ArgType::None, 'e');
     opt.add("line-length", ec::ArgType::Required, 'l');
+    opt.add("version", ec::ArgType::None, 'v');
     opt.add("help", ec::ArgType::None, 'h');
     opt.parse(argc, argv);
 
@@ -157,13 +159,16 @@ int main(int argc, char** argv)
     if(opt.isPresent("help")) {
         ec::fprintln(std::cerr, "Usage: ", argv[0], " <options>");
         ec::fprintln(std::cerr, "Options:");
-        ec::fprintln(std::cerr, "    --infile, -i       Input file (default: stdin)");
-        ec::fprintln(std::cerr, "    --outfile, -o      Output file (default: stdout)");
-        ec::fprintln(std::cerr, "    --decrypt, -d      Decrypt");
-        ec::fprintln(std::cerr, "    --encrypt, -e      Encrypt (default)");
-        ec::fprintln(std::cerr, "    --line-length, -l  Line length (default: 80)");
-        ec::fprintln(std::cerr, "    --help, -h         Show help");
+        ec::fprintln(std::cerr, "  --infile,-i        Input file (default: stdin)");
+        ec::fprintln(std::cerr, "  --outfile,-o       Output file (default: stdout)");
+        ec::fprintln(std::cerr, "  --decrypt,-d       Decrypt");
+        ec::fprintln(std::cerr, "  --encrypt,-e       Encrypt (default)");
+        ec::fprintln(std::cerr, "  --line-length,-l   Line length (default: 80)");
+        ec::fprintln(std::cerr, "  --version,-v       Show program version");
+        ec::fprintln(std::cerr, "  --help,-h          Show help");
         return 0;
+    } else if(opt.isPresent("version")) {
+        ec::println(argv[0], " ", ec::VERSION_MAJOR, ".", ec::VERSION_MINOR);
     } else if(opt.isPresent("decrypt")) {
         return !decrypt(infile, outfile);
     } else {
