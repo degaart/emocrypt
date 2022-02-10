@@ -5,6 +5,10 @@
 
 namespace ec {
 
+    static const auto KD_OPSLIMIT = 2;
+    static const auto KD_MEMLIMIT = 67108864U;
+    static const auto KD_ALG = crypto_pwhash_argon2id_ALG_ARGON2ID13;
+
     Symbols load_symbols()
     {
         Symbols result;
@@ -84,7 +88,12 @@ namespace ec {
 
     byte_string encrypt(const void* buffer, size_t length, const std::string& password)
     {
-        byte_string result(crypto_pwhash_SALTBYTES + crypto_secretbox_NONCEBYTES + length + crypto_secretbox_MACBYTES, '\0');
+        size_t result_size = 
+            crypto_pwhash_SALTBYTES +
+            crypto_secretbox_NONCEBYTES +
+            length +
+            crypto_secretbox_MACBYTES;
+        byte_string result(result_size, '\0');
         unsigned char* salt = &result[0];
         unsigned char* nonce = &result[0] + crypto_pwhash_SALTBYTES;
         unsigned char* ciphertext = &result[0] + crypto_pwhash_SALTBYTES + crypto_secretbox_NONCEBYTES;
@@ -97,9 +106,9 @@ namespace ec {
         int ret = crypto_pwhash(&key[0], key.size(),
                                 password.data(), password.size(),
                                 salt,
-                                crypto_pwhash_OPSLIMIT_INTERACTIVE,
-                                crypto_pwhash_MEMLIMIT_INTERACTIVE,
-                                crypto_pwhash_ALG_DEFAULT);
+                                KD_OPSLIMIT,
+                                KD_MEMLIMIT,
+                                KD_ALG);
         if(ret)
             throw std::runtime_error("crypto_pwhash() failed");
 
@@ -128,9 +137,9 @@ namespace ec {
         int ret = crypto_pwhash(&key[0], key.size(),
                                 password.data(), password.size(),
                                 salt,
-                                crypto_pwhash_OPSLIMIT_INTERACTIVE,
-                                crypto_pwhash_MEMLIMIT_INTERACTIVE,
-                                crypto_pwhash_ALG_DEFAULT);
+                                KD_OPSLIMIT,
+                                KD_MEMLIMIT,
+                                KD_ALG);
         if(ret)
             throw std::runtime_error("crypto_pwhash() failed");
         
