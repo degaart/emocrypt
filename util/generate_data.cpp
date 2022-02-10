@@ -6,7 +6,6 @@
 #include <common/format.h>
 #include <fstream>
 #include <locale>
-#include <optional>
 #include <regex>
 #include <stdexcept>
 #include <string>
