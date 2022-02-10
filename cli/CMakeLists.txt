@@ -1,4 +1,4 @@
-set(PROGRAM cli)
+set(PROGRAM emocrypt)
 add_executable(${PROGRAM}
     main.cpp
 )
