@@ -6,4 +6,4 @@ target_link_libraries(${PROGRAM} PRIVATE
     project_options
     common
 )
-
+install(TARGETS ${PROGRAM})
