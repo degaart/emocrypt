@@ -6,16 +6,23 @@
 
 namespace ec {
 
-    template<typename... Args>
-    inline void fprint(std::ostream& os, Args&&... args)
+    template<typename Arg>
+    inline void fprint(std::ostream& os, Arg&& arg)
     {
-        (os << ... << std::forward<Args>(args));
+        os << arg;
+    }
+
+    template<typename Arg, typename... Args>
+    inline void fprint(std::ostream& os, Arg&& arg, Args&&... args)
+    {
+        os << arg;
+        fprint(os, std::forward<Args>(args)...);
     }
 
     template<typename... Args>
     inline void fprintln(std::ostream& os, Args&&... args)
     {
-        (os << ... << std::forward<Args>(args)) << "\n";
+        fprint(os, std::forward<Args>(args)..., "\n");
     }
 
     template<typename... Args>

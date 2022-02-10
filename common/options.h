@@ -12,14 +12,6 @@ namespace ec {
         Optional,
     };
 
-    struct Option {
-        ArgType type;
-        char shortopt;
-        int value;
-        bool present;
-        std::optional<std::string> arg;
-    };
-
     class Options {
     private:
         class Impl;
@@ -27,10 +19,10 @@ namespace ec {
     public:
         Options();
         ~Options();
-        void add(std::string name, ArgType type, char shortopt = '\0');
+        void add(const std::string& name, ArgType type, char shortopt = '\0');
         void parse(int argc, char** argv);
         bool isPresent(const std::string& name) const;
-        std::optional<std::string> arg(const std::string& name) const;
+        std::string arg(const std::string& name) const;
         const std::vector<std::string>& positionals() const;
     };
 }

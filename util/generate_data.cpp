@@ -11,7 +11,10 @@
 #include <stdexcept>
 #include <string>
 
-std::optional<std::string> to_utf8(char32_t codepoint)
+using std::unique_ptr;
+using std::make_unique;
+
+unique_ptr<std::string> to_utf8(char32_t codepoint)
 {
     std::locale loc("");
     const std::codecvt<char32_t, char, std::mbstate_t> &cvt =
@@ -25,9 +28,9 @@ std::optional<std::string> to_utf8(char32_t codepoint)
     std::codecvt_base::result res = cvt.out(state, &codepoint, 1+&codepoint, last_in,
                                             buf, buf+4, last_out);
     if(res != std::codecvt_base::result::ok)
-        return std::nullopt;
+        return nullptr;
     auto sz = last_out - buf;
-    return std::make_optional<std::string>(buf, sz);
+    return make_unique<std::string>(buf, sz);
 }
 
 int main(int argc, char** argv)
@@ -50,7 +53,8 @@ int main(int argc, char** argv)
             uint64_t end_val = mat[2].length() ? std::stoll(mat[2], nullptr, 16) : start_val;
 
             for(uint64_t cp = start_val; cp < end_val; cp++) {
-                result.push_back(std::make_tuple<std::string,uint32_t>(to_utf8(cp).value(), cp));
+                std::string utf8_str = *to_utf8(cp);
+                result.push_back(std::make_tuple<std::string,uint32_t>(std::move(utf8_str), cp));
             }
         }
     }

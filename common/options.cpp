@@ -6,10 +6,18 @@
 #include <sstream>
 #include <vector>
 
-using std::optional;
-using std::nullopt;
+using std::unique_ptr;
+using std::make_unique;
 
 namespace ec {
+
+    struct Option {
+        ArgType type;
+        char shortopt;
+        int value;
+        bool present;
+        std::string arg;
+    };
 
     class Options::Impl {
         private:
@@ -17,13 +25,13 @@ namespace ec {
             int _nextValue;
             std::vector<std::string> _positionals;
 
-            optional<Option> get(const std::string& name) const;
+            unique_ptr<Option> get(const std::string& name) const;
         public:
             Impl();
-            void add(std::string name, ArgType type, char shortopt = '\0');
+            void add(const std::string& name, ArgType type, char shortopt = '\0');
             void parse(int argc, char** argv);
             bool isPresent(const std::string& name) const;
-            optional<std::string> arg(const std::string& name) const;
+            std::string arg(const std::string& name) const;
             const std::vector<std::string>& positionals() const;
     };
 
@@ -32,14 +40,14 @@ namespace ec {
     {
     }
     
-    void Options::Impl::add(std::string name, ArgType type, char shortopt)
+    void Options::Impl::add(const std::string& name, ArgType type, char shortopt)
     {
         Option opt;
         opt.type = type;
         opt.shortopt = shortopt;
         opt.value = shortopt ? shortopt : _nextValue++;
         opt.present = false;
-        _options.emplace(std::move(name), opt);
+        _options.emplace(name, opt);
     }
 
     void Options::Impl::parse(int argc, char** argv)
@@ -83,7 +91,7 @@ namespace ec {
             
             it->second.present = true;
             if(optarg)
-                it->second.arg = std::string(optarg);
+                it->second.arg = optarg;
         }
 
         argc -= optind;
@@ -94,12 +102,12 @@ namespace ec {
         }
     }
 
-    optional<Option> Options::Impl::get(const std::string& name) const
+    unique_ptr<Option> Options::Impl::get(const std::string& name) const
     {
         auto it = _options.find(name);
         if(it == _options.end())
-            return nullopt;
-        return it->second;
+            return nullptr;
+        return make_unique<Option>(it->second);
     }
 
     bool Options::Impl::isPresent(const std::string& name) const
@@ -110,11 +118,11 @@ namespace ec {
         return opt->present;
     }
 
-    optional<std::string> Options::Impl::arg(const std::string& name) const
+    std::string Options::Impl::arg(const std::string& name) const
     {
         auto opt = get(name);
         if(!opt)
-            return nullopt;
+            return nullptr;
         return opt->arg;
     }
 
@@ -132,7 +140,7 @@ namespace ec {
     {
     }
 
-    void Options::add(std::string name, ArgType type, char shortopt)
+    void Options::add(const std::string& name, ArgType type, char shortopt)
     {
         _impl->add(std::move(name), type, shortopt);
     }
@@ -147,7 +155,7 @@ namespace ec {
         return _impl->isPresent(name);
     }
 
-    optional<std::string> Options::arg(const std::string& name) const
+    std::string Options::arg(const std::string& name) const
     {
         return _impl->arg(name);
     }

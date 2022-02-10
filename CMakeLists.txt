@@ -9,7 +9,7 @@ option(ENABLE_TESTING "Enable unit tests" OFF)
 
 find_package(libsodium REQUIRED)
 add_library(project_options INTERFACE)
-target_compile_features(project_options INTERFACE cxx_std_17)
+target_compile_features(project_options INTERFACE cxx_std_14)
 target_link_libraries(project_options INTERFACE libsodium::libsodium)
 
 if(ENABLE_ASAN)

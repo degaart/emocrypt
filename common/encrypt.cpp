@@ -1,5 +1,6 @@
 #include "encrypt.h"
 #include "symbols.h"
+#include <cassert>
 #include <sodium.h>
 
 namespace ec {
@@ -7,7 +8,7 @@ namespace ec {
     Symbols load_symbols()
     {
         Symbols result;
-        for(int i = 0; i < std::size(ec::symbols); i++) {
+        for(int i = 0; i < sizeof(ec::symbols) / sizeof(ec::symbols[0]); i++) {
             std::string s;
             for(int j = 0; j < 4; j++) {
                 if(ec::symbols[i][j])
@@ -84,16 +85,16 @@ namespace ec {
     byte_string encrypt(const void* buffer, size_t length, const std::string& password)
     {
         byte_string result(crypto_pwhash_SALTBYTES + crypto_secretbox_NONCEBYTES + length + crypto_secretbox_MACBYTES, '\0');
-        unsigned char* salt = result.data();
-        unsigned char* nonce = result.data() + crypto_pwhash_SALTBYTES;
-        unsigned char* ciphertext = result.data() + crypto_pwhash_SALTBYTES + crypto_secretbox_NONCEBYTES;
+        unsigned char* salt = &result[0];
+        unsigned char* nonce = &result[0] + crypto_pwhash_SALTBYTES;
+        unsigned char* ciphertext = &result[0] + crypto_pwhash_SALTBYTES + crypto_secretbox_NONCEBYTES;
         
         /* salt */
         randombytes_buf(salt, crypto_pwhash_SALTBYTES);
         
         /* key derivation */
         byte_string key(crypto_secretbox_KEYBYTES, '\0');
-        int ret = crypto_pwhash(key.data(), key.size(),
+        int ret = crypto_pwhash(&key[0], key.size(),
                                 password.data(), password.size(),
                                 salt,
                                 crypto_pwhash_OPSLIMIT_INTERACTIVE,
@@ -124,7 +125,7 @@ namespace ec {
         
         /* key derivation */
         byte_string key(crypto_secretbox_KEYBYTES, '\0');
-        int ret = crypto_pwhash(key.data(), key.size(),
+        int ret = crypto_pwhash(&key[0], key.size(),
                                 password.data(), password.size(),
                                 salt,
                                 crypto_pwhash_OPSLIMIT_INTERACTIVE,
@@ -134,7 +135,7 @@ namespace ec {
             throw std::runtime_error("crypto_pwhash() failed");
         
         /* decrypt */
-        ret = crypto_secretbox_open_easy(result.data(),
+        ret = crypto_secretbox_open_easy(&result[0],
                                         ciphertext,
                                         result.size() + crypto_secretbox_MACBYTES,
                                         nonce,

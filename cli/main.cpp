@@ -7,9 +7,12 @@
 #include <termios.h>
 #include <unistd.h>
 
+using std::unique_ptr;
+using std::make_unique;
+
 namespace {
 
-    bool decrypt(const std::optional<std::string>& infile, const std::optional<std::string>& outfile)
+    bool decrypt(const std::string& infile, const std::string& outfile)
     {
         ec::fprint(std::cerr, "Password: ");
         std::cout.flush();
@@ -27,10 +30,10 @@ namespace {
 
         std::ifstream fis;
         std::istream* is = &std::cin;
-        if(infile) {
-            fis.open(*infile, std::ios::in|std::ios::binary);
+        if(infile.size()) {
+            fis.open(infile, std::ios::in|std::ios::binary);
             if(!fis) {
-                ec::fprintln(std::cerr, "open(\"", *infile, "\"): ", strerror(errno));
+                ec::fprintln(std::cerr, "open(\"", infile, "\"): ", strerror(errno));
                 return false;
             }
             fis.exceptions(std::ios::badbit);
@@ -45,10 +48,10 @@ namespace {
 
         std::ofstream fos;
         std::ostream* os = &std::cout;
-        if(outfile) {
-            fos.open(*outfile, std::ios::out|std::ios::binary|std::ios::trunc);
+        if(outfile.size()) {
+            fos.open(outfile, std::ios::out|std::ios::binary|std::ios::trunc);
             if(!fos) {
-                ec::fprintln(std::cerr, "open(\"", *outfile, "\"): ", strerror(errno));
+                ec::fprintln(std::cerr, "open(\"", outfile, "\"): ", strerror(errno));
                 return false;
             }
             fos.exceptions(std::ios::badbit);
@@ -58,7 +61,7 @@ namespace {
         return true;
     }
 
-    bool encrypt(const std::optional<std::string>& infile, const std::optional<std::string>& outfile, int line_length)
+    bool encrypt(const std::string& infile, const std::string& outfile, int line_length)
     {
         ec::fprint(std::cerr, "Password: ");
         std::cout.flush();
@@ -87,10 +90,10 @@ namespace {
 
         std::ifstream fis;
         std::istream* is = &std::cin;
-        if(infile) {
-            fis.open(*infile, std::ios::binary|std::ios::in);
+        if(infile.size()) {
+            fis.open(infile, std::ios::binary|std::ios::in);
             if(!fis) {
-                ec::fprintln(std::cerr, "open(\"", *infile, "\"): ", strerror(errno));
+                ec::fprintln(std::cerr, "open(\"", infile, "\"): ", strerror(errno));
                 return false;
             }
             fis.exceptions(std::ios::badbit);
@@ -113,10 +116,10 @@ namespace {
         
         std::ofstream fos;
         std::ostream* os = &std::cout;
-        if(outfile) {
-            fos.open(*outfile, std::ios::binary|std::ios::out|std::ios::trunc);
+        if(outfile.size()) {
+            fos.open(outfile, std::ios::binary|std::ios::out|std::ios::trunc);
             if(!fos) {
-                ec::fprintln(std::cerr, "open(\"", *outfile, "\"): ", strerror(errno));
+                ec::fprintln(std::cerr, "open(\"", outfile, "\"): ", strerror(errno));
                 return false;
             }
             fos.exceptions(std::ios::badbit);
@@ -139,17 +142,17 @@ int main(int argc, char** argv)
     opt.add("help", ec::ArgType::None, 'h');
     opt.parse(argc, argv);
 
-    std::optional<std::string> infile;
+    std::string infile;
     if(opt.isPresent("infile"))
         infile = opt.arg("infile");
     
-    std::optional<std::string> outfile;
+    std::string outfile;
     if(opt.isPresent("outfile"))
         outfile = opt.arg("outfile");
 
     int line_length = 80;
     if(opt.isPresent("line-length"))
-        line_length = std::stoi(*opt.arg("line-length"));
+        line_length = std::stoi(opt.arg("line-length"));
 
     if(opt.isPresent("help")) {
         ec::fprintln(std::cerr, "Usage: ", argv[0], " <options>");
