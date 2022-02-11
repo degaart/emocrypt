@@ -105,10 +105,10 @@ namespace ec {
 
         /* Params */
         assert(KD_MEMLIMIT > 1 && KD_MEMLIMIT < 64);
-        *version = static_cast<unsigned char>(KD_VERSION) ^ nonce[0];
-        *opslimit = static_cast<unsigned char>(KD_OPSLIMIT) ^ nonce[1];
-        *memlimit = static_cast<unsigned char>(KD_MEMLIMIT) ^ nonce[2];
-        *algo  = static_cast<unsigned char>(KD_ALG) ^ nonce[3];
+        *version = KD_VERSION ^ nonce[0];
+        *opslimit = KD_OPSLIMIT ^ nonce[1];
+        *memlimit = KD_MEMLIMIT ^ nonce[2];
+        *algo  = KD_ALG ^ nonce[3];
         
         /* key derivation */
         byte_string key(crypto_secretbox_KEYBYTES, '\0');
@@ -119,7 +119,7 @@ namespace ec {
                                 (1 << KD_MEMLIMIT),
                                 KD_ALG);
         if(ret)
-            throw std::runtime_error("crypto_pwhash() failed");
+            return byte_string();
 
         /* nonce */
         ret = crypto_secretbox_easy(ciphertext,
@@ -127,7 +127,7 @@ namespace ec {
                                     nonce,
                                     key.data());
         if(ret)
-            throw std::runtime_error("crypto_secretbox_easy() failed");
+            return byte_string();
         return result;
     }
 
@@ -144,16 +144,16 @@ namespace ec {
         const unsigned char* ciphertext = algo + sizeof(unsigned char);
 
         /* Check version */
-        int v_version = (*version) ^ nonce[0];
-        int v_opslimit = (*opslimit) ^ nonce[1];
-        int v_memlimit = (*memlimit) ^ nonce[2];
+        int v_version = *version ^ nonce[0];
+        int v_opslimit = *opslimit ^ nonce[1];
+        int v_memlimit = *memlimit ^ nonce[2];
         int v_algo = *algo ^ nonce[3];
         if(v_version != KD_VERSION)
-            throw std::runtime_error(ec::format("Invalid version: ", v_version));
+            return byte_string();
         else if(v_opslimit == 0 || v_opslimit > 256)
-            throw std::runtime_error("Invalid opslimit");
+            return byte_string();
         else if(v_memlimit < 1 || v_memlimit > 64)
-            throw std::runtime_error("Invalid memlimit");
+           return byte_string();
     
         /* key derivation */
         byte_string key(crypto_secretbox_KEYBYTES, '\0');
@@ -164,7 +164,7 @@ namespace ec {
                                 1 << v_memlimit,
                                 v_algo);
         if(ret)
-            throw std::runtime_error("crypto_pwhash() failed");
+            return byte_string();
         
         /* decrypt */
         size_t result_size = length - nonce_size - 4 - crypto_secretbox_MACBYTES;
@@ -175,7 +175,7 @@ namespace ec {
                                         nonce,
                                         key.data());
         if(ret)
-            throw std::runtime_error("crypto_secretbox_open_easy() failed");
+            return byte_string();
         return result;
     }
 

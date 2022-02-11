@@ -1,5 +1,6 @@
 add_library(common
     encrypt.cpp
+    fd.cpp
     options.cpp
     term_echo.cpp
     utf8.cpp

@@ -4,7 +4,8 @@
 
 namespace ec {
 
-    TermEcho::TermEcho()
+    TermEcho::TermEcho(int fd)
+        : _fd(fd)
     {
     }
 
@@ -16,17 +17,17 @@ namespace ec {
     void TermEcho::enable()
     {
         termios ti;
-        tcgetattr(fileno(stdin), &ti);
+        tcgetattr(_fd, &ti);
         ti.c_lflag |= ECHO;
-        tcsetattr(fileno(stdin), TCSAFLUSH, &ti);
+        tcsetattr(_fd, TCSAFLUSH, &ti);
     }
 
     void TermEcho::disable()
     {
         termios ti;
-        tcgetattr(fileno(stdin), &ti);
+        tcgetattr(_fd, &ti);
         ti.c_lflag &= ~ECHO;
-        tcsetattr(fileno(stdin), TCSAFLUSH, &ti);
+        tcsetattr(_fd, TCSAFLUSH, &ti);
     }
 
     void TermEcho::restore()

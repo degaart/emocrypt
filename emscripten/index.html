@@ -31,7 +31,10 @@
       }
 
       const result = Module.ec_encrypt(password, plaintext);
-      document.getElementById("output-txt").value = result;
+      if(result)
+        document.getElementById("output-txt").value = result;
+      else
+        alert("Encryption failed");
     }
 
     function onDecrypt() {
@@ -48,7 +51,10 @@
       }
 
       const result = Module.ec_decrypt(password, ciphertext);
-      document.getElementById("output-txt").value = result;
+      if(result)
+        document.getElementById("output-txt").value = result;
+      else
+        alert("Decryption failed");
     }
   </script>
   <style type="text/css">

@@ -5,3 +5,4 @@ Build
 .DS_Store
 .buildenv
 .emscripten
+Build-*

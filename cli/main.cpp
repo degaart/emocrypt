@@ -1,10 +1,13 @@
 #include <cerrno>
 #include <common/encrypt.h>
+#include <common/fd.h>
 #include <common/format.h>
 #include <common/options.h>
 #include <common/term_echo.h>
 #include <common/version.h>
+#include <fcntl.h>
 #include <fstream>
+#include <stdexcept>
 #include <termios.h>
 #include <unistd.h>
 
@@ -13,21 +16,36 @@ using std::make_unique;
 
 namespace {
 
-    bool decrypt(const std::string& infile, const std::string& outfile)
+    std::string get_password(const std::string& prompt)
     {
-        ec::fprint(std::cerr, "Password: ");
+        ec::fprint(std::cerr, prompt);
         std::cout.flush();
 
-        ec::TermEcho term_echo;
+        std::string password;
+        char ch;
+        ec::FD tty("/dev/tty", O_RDONLY);
+
+        ec::TermEcho term_echo(tty.fd());
         term_echo.disable();
 
-        std::string password;
-        if(!std::getline(std::cin, password)) {
-            ec::fprintln(std::cerr, "\nNo password supplied");
+        while(true) {
+            auto ret = tty.read(&ch, sizeof(ch));
+            if(!ret || ch == '\n')
+                break;
+            password.append(ch, 1);
+        }
+
+        ec::fprint(std::cerr, "\n");
+        return password;
+    }
+
+    bool decrypt(const std::string& infile, const std::string& outfile)
+    {
+        std::string password = get_password("Password: ");
+        if(password.empty()) {
+            ec::fprintln(std::cerr, "Password is required");
             return false;
         }
-        term_echo.enable();
-        ec::fprint(std::cerr, "\n");
 
         std::ifstream fis;
         std::istream* is = &std::cin;
@@ -45,7 +63,16 @@ namespace {
         std::string encoded_ciphertext((std::istreambuf_iterator<char>(*is)),
                                         std::istreambuf_iterator<char>());
         ec::byte_string ciphertext = ec::decode(symbols, encoded_ciphertext);
+        if(ciphertext.empty()) {
+            ec::fprintln(std::cerr, "Invalid ciphertext data");
+            return false;
+        }
+
         ec::byte_string plaintext = ec::decrypt(ciphertext.data(), ciphertext.size(), password);
+        if(plaintext.empty()) {
+            ec::fprintln(std::cerr, "Decryption failed");
+            return false;
+        }
 
         std::ofstream fos;
         std::ostream* os = &std::cout;
@@ -58,36 +85,25 @@ namespace {
             fos.exceptions(std::ios::badbit);
             os = &fos;
         }
+
+        plaintext.append('\n', 1);
         os->write(reinterpret_cast<const char*>(plaintext.data()), plaintext.size());
         return true;
     }
 
     bool encrypt(const std::string& infile, const std::string& outfile, int line_length)
     {
-        ec::fprint(std::cerr, "Password: ");
-        std::cout.flush();
-
-        ec::TermEcho term_echo;
-        term_echo.disable();
-
-        std::string password;
-        if(!std::getline(std::cin, password)) {
-            ec::fprintln(std::cerr, "\nNo password supplied");
+        std::string password = get_password("Password: ");
+        if(password.empty()) {
+            ec::fprintln(std::cerr, "Password is required");
             return false;
         }
 
-        ec::fprint(std::cerr, "\nConfirm: ");
-        std::cerr.flush();
-
-        std::string confirmation;
-        std::getline(std::cin, confirmation);
-
+        std::string confirmation = get_password("Confirmation: ");
         if(confirmation != password) {
-            ec::fprintln(std::cerr, "\nPassword mismatch");
+            ec::fprintln(std::cerr, "Password and confirmation do not match");
             return false;
         }
-        ec::fprintln(std::cerr);
-        term_echo.enable();
 
         std::ifstream fis;
         std::istream* is = &std::cin;
@@ -109,6 +125,10 @@ namespace {
         }
 
         ec::byte_string ciphertext = ec::encrypt(plaintext.data(), plaintext.size(), password);
+        if(ciphertext.empty()) {
+            ec::fprintln(std::cerr, "Encryption failed");
+            return false;
+        }
 
         std::random_device rd;
         std::mt19937 rng(rd());

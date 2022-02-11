@@ -3,8 +3,10 @@
 namespace ec {
     
     class TermEcho {
+    private:
+        int _fd;
     public:
-        TermEcho();
+        explicit TermEcho(int fd);
         ~TermEcho();
         void enable();
         void disable();
