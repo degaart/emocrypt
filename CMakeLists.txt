@@ -1,8 +1,13 @@
 cmake_minimum_required(VERSION 3.15)
 project(emocrypt)
 
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/CMake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/CMake)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+set(EMSCRIPTEN OFF)
+if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+    set(EMSCRIPTEN ON)
+endif()
 
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(ENABLE_TESTING "Enable unit tests" OFF)
@@ -18,8 +23,13 @@ if(ENABLE_ASAN)
 endif()
 
 add_subdirectory(common)
-add_subdirectory(util)
-add_subdirectory(cli)
+
+if(EMSCRIPTEN)
+    add_subdirectory(emscripten)
+else()
+    add_subdirectory(cli)
+    add_subdirectory(util)
+endif()
 
 if(ENABLE_TESTING)
     add_subdirectory(test)

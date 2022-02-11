@@ -4,3 +4,4 @@ Build
 ._*
 .DS_Store
 .buildenv
+.emscripten

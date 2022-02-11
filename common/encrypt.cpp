@@ -5,8 +5,8 @@
 
 namespace ec {
 
-    static const auto KD_OPSLIMIT = 2;
-    static const auto KD_MEMLIMIT = 67108864U;
+    static const auto KD_OPSLIMIT = 4;
+    static const auto KD_MEMLIMIT = 1U * 1024U * 1024U; /* sorry but the default is too high for emscripten */
     static const auto KD_ALG = crypto_pwhash_argon2id_ALG_ARGON2ID13;
 
     Symbols load_symbols()
@@ -124,7 +124,7 @@ namespace ec {
         return result;
     }
 
-    byte_string decryt(const void* buffer, size_t length, const std::string& password)
+    byte_string decrypt(const void* buffer, size_t length, const std::string& password)
     {
         byte_string result(length - crypto_pwhash_SALTBYTES - crypto_secretbox_NONCEBYTES - crypto_secretbox_MACBYTES, '\0');
         const unsigned char* ptr = reinterpret_cast<const unsigned char*>(buffer);
@@ -155,4 +155,6 @@ namespace ec {
     }
 
 }
+
+
 

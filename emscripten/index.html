@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+  <script>
+    var Module = {
+      onRuntimeInitialized: function() {
+        if (Module.getRandomValue === undefined) {
+          var randomValuesStandard = function() {
+            var buf = new Uint32Array(1);
+            window.crypto.getRandomValues(buf);
+            return buf[0] >>> 0;
+          };
+          Module.getRandomValue = randomValuesStandard;
+        }
+
+        document.getElementById("encrypt-btn").addEventListener("click", onEncrypt);
+        document.getElementById("decrypt-btn").addEventListener("click", onDecrypt);
+      }
+    };
+
+    function onEncrypt() {
+      const password = document.getElementById("password-txt").value;
+      const plaintext = document.getElementById("input-txt").value;
+      document.getElementById("output-txt").value = "";
+
+      if(password.length == 0) {
+        alert("Please enter a password");
+        return;
+      } else if(plaintext.length == 0) {
+        alert("Please enter some text to encrypt");
+        return;
+      }
+
+      const result = Module.ec_encrypt(password, plaintext);
+      document.getElementById("output-txt").value = result;
+    }
+
+    function onDecrypt() {
+      const password = document.getElementById("password-txt").value;
+      const ciphertext = document.getElementById("input-txt").value;
+      document.getElementById("output-txt").value = "";
+
+      if(password.length == 0) {
+        alert("Please enter a password");
+        return;
+      } else if(ciphertext.length == 0) {
+        alert("Please enter some text to decrypt");
+        return;
+      }
+
+      const result = Module.ec_decrypt(password, ciphertext);
+      document.getElementById("output-txt").value = result;
+    }
+  </script>
+  <style type="text/css">
+    input {
+      display: block;
+    }
+
+    textarea {
+      display: block;
+    }
+  </style>
+  <script src="emocrypt.js"></script>
+  <body>
+    <h1>emocrypt</h1>
+    <p>Encrypt text into an emoji soup</p>
+
+    <label>Password:</label>
+    <input type="password" id="password-txt" size="47">
+
+    <label>Input:</label>
+    <textarea id="input-txt" rows="15" cols="50"></textarea>
+
+    <label>Output:</label>
+    <textarea id="output-txt" rows="15" cols="50"></textarea>
+
+    <button type="button" id="encrypt-btn">Encrypt</button>
+    <button type="button" id="decrypt-btn">Decrypt</button>
+  </body>
+</html>
+
+
