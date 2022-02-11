@@ -45,7 +45,7 @@ namespace {
         std::string encoded_ciphertext((std::istreambuf_iterator<char>(*is)),
                                         std::istreambuf_iterator<char>());
         ec::byte_string ciphertext = ec::decode(symbols, encoded_ciphertext);
-        ec::byte_string plaintext = ec::decryt(ciphertext.data(), ciphertext.size(), password);
+        ec::byte_string plaintext = ec::decrypt(ciphertext.data(), ciphertext.size(), password);
 
         std::ofstream fos;
         std::ostream* os = &std::cout;

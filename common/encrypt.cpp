@@ -1,12 +1,14 @@
 #include "encrypt.h"
+#include "format.h"
 #include "symbols.h"
 #include <cassert>
 #include <sodium.h>
 
 namespace ec {
 
-    static const auto KD_OPSLIMIT = 4;
-    static const auto KD_MEMLIMIT = 1U * 1024U * 1024U; /* sorry but the default is too high for emscripten */
+    static const auto KD_VERSION = 1U;
+    static const auto KD_OPSLIMIT = 4U;
+    static const auto KD_MEMLIMIT = 20U; /* 1MB (lowered to help with the webasm version) */
     static const auto KD_ALG = crypto_pwhash_argon2id_ALG_ARGON2ID13;
 
     Symbols load_symbols()
@@ -88,62 +90,85 @@ namespace ec {
 
     byte_string encrypt(const void* buffer, size_t length, const std::string& password)
     {
-        size_t result_size = 
-            crypto_pwhash_SALTBYTES +
-            crypto_secretbox_NONCEBYTES +
-            length +
-            crypto_secretbox_MACBYTES;
+        size_t nonce_size = std::max(crypto_pwhash_SALTBYTES, crypto_secretbox_NONCEBYTES);
+        size_t result_size = nonce_size + 4 + length + crypto_secretbox_MACBYTES;
         byte_string result(result_size, '\0');
-        unsigned char* salt = &result[0];
-        unsigned char* nonce = &result[0] + crypto_pwhash_SALTBYTES;
-        unsigned char* ciphertext = &result[0] + crypto_pwhash_SALTBYTES + crypto_secretbox_NONCEBYTES;
+        unsigned char* nonce = &result[0];
+        unsigned char* version = nonce + nonce_size;
+        unsigned char* opslimit = version + sizeof(unsigned char);
+        unsigned char* memlimit = opslimit + sizeof(unsigned char);
+        unsigned char* algo = memlimit + sizeof(unsigned char);
+        unsigned char* ciphertext = algo + sizeof(unsigned char);
         
         /* salt */
-        randombytes_buf(salt, crypto_pwhash_SALTBYTES);
+        randombytes_buf(nonce, nonce_size);
+
+        /* Params */
+        assert(KD_MEMLIMIT > 1 && KD_MEMLIMIT < 64);
+        *version = static_cast<unsigned char>(KD_VERSION) ^ nonce[0];
+        *opslimit = static_cast<unsigned char>(KD_OPSLIMIT) ^ nonce[1];
+        *memlimit = static_cast<unsigned char>(KD_MEMLIMIT) ^ nonce[2];
+        *algo  = static_cast<unsigned char>(KD_ALG) ^ nonce[3];
         
         /* key derivation */
         byte_string key(crypto_secretbox_KEYBYTES, '\0');
         int ret = crypto_pwhash(&key[0], key.size(),
                                 password.data(), password.size(),
-                                salt,
+                                nonce,
                                 KD_OPSLIMIT,
-                                KD_MEMLIMIT,
+                                (1 << KD_MEMLIMIT),
                                 KD_ALG);
         if(ret)
             throw std::runtime_error("crypto_pwhash() failed");
 
         /* nonce */
-        randombytes_buf(nonce, crypto_secretbox_NONCEBYTES);
         ret = crypto_secretbox_easy(ciphertext,
                                     reinterpret_cast<const unsigned char*>(buffer), length,
                                     nonce,
                                     key.data());
         if(ret)
             throw std::runtime_error("crypto_secretbox_easy() failed");
-        
         return result;
     }
 
     byte_string decrypt(const void* buffer, size_t length, const std::string& password)
     {
-        byte_string result(length - crypto_pwhash_SALTBYTES - crypto_secretbox_NONCEBYTES - crypto_secretbox_MACBYTES, '\0');
-        const unsigned char* ptr = reinterpret_cast<const unsigned char*>(buffer);
-        const unsigned char* salt = ptr;
-        const unsigned char* nonce = ptr + crypto_pwhash_SALTBYTES;
-        const unsigned char* ciphertext = ptr + crypto_pwhash_SALTBYTES + crypto_secretbox_NONCEBYTES;
+        size_t nonce_size = std::max(crypto_pwhash_SALTBYTES, crypto_secretbox_NONCEBYTES);
+        assert(length >= nonce_size + 4 + crypto_secretbox_MACBYTES);
         
+        const unsigned char* nonce = reinterpret_cast<const unsigned char*>(buffer);
+        const unsigned char* version = nonce + nonce_size;
+        const unsigned char* opslimit = version + sizeof(unsigned char);
+        const unsigned char* memlimit = opslimit + sizeof(unsigned char);
+        const unsigned char* algo = memlimit + sizeof(unsigned char);
+        const unsigned char* ciphertext = algo + sizeof(unsigned char);
+
+        /* Check version */
+        int v_version = (*version) ^ nonce[0];
+        int v_opslimit = (*opslimit) ^ nonce[1];
+        int v_memlimit = (*memlimit) ^ nonce[2];
+        int v_algo = *algo ^ nonce[3];
+        if(v_version != KD_VERSION)
+            throw std::runtime_error(ec::format("Invalid version: ", v_version));
+        else if(v_opslimit == 0 || v_opslimit > 256)
+            throw std::runtime_error("Invalid opslimit");
+        else if(v_memlimit < 1 || v_memlimit > 64)
+            throw std::runtime_error("Invalid memlimit");
+    
         /* key derivation */
         byte_string key(crypto_secretbox_KEYBYTES, '\0');
         int ret = crypto_pwhash(&key[0], key.size(),
                                 password.data(), password.size(),
-                                salt,
-                                KD_OPSLIMIT,
-                                KD_MEMLIMIT,
-                                KD_ALG);
+                                nonce,
+                                v_opslimit,
+                                1 << v_memlimit,
+                                v_algo);
         if(ret)
             throw std::runtime_error("crypto_pwhash() failed");
         
         /* decrypt */
+        size_t result_size = length - nonce_size - 4 - crypto_secretbox_MACBYTES;
+        byte_string result(result_size, '\0');
         ret = crypto_secretbox_open_easy(&result[0],
                                         ciphertext,
                                         result.size() + crypto_secretbox_MACBYTES,

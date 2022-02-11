@@ -14,6 +14,7 @@ static void test_encrypt()
     ec::println("*** Testing encrypt() and decrypt()");
     std::string password("hunter2");
     std::string plaintext("All your base are belong to us");
+    ec::println("Plaintext size: ", plaintext.size());
 
     std::random_device rd;
     std::mt19937 rng(rd());
@@ -22,12 +23,13 @@ static void test_encrypt()
     auto ciphertext = encrypt(plaintext.c_str(), plaintext.size(), password);
     auto encoded = encode(rng, symbols, ciphertext.data(), ciphertext.size());
     ec::println("Encoded: ", encoded);
-    ec::println("Encoded size: ", encoded.size());
+    auto percent = (encoded.size() * 100) / plaintext.size();
+    ec::println("Encoded size: ", encoded.size(), " (", percent, "% increase)");
 
     auto decoded = decode(symbols, encoded);
     assert(decoded == ciphertext);
 
-    auto decrypted = decryt(decoded.data(), decoded.size(), password);
+    auto decrypted = decrypt(decoded.data(), decoded.size(), password);
     ec::println("Decrypted: ", decrypted.c_str());
     ec::println("Decrypted size: ", decrypted.size());
 }
@@ -70,7 +72,7 @@ static void test_encrypt_large()
     auto ciphertext = ec::encrypt(plaintext.data(), plaintext.size(), password);
     ec::println("ciphertext.size(): ", ciphertext.size());
 
-    auto decrypted = ec::decryt(ciphertext.data(), ciphertext.size(), password);
+    auto decrypted = ec::decrypt(ciphertext.data(), ciphertext.size(), password);
     ec::println("decypted.size(): ", decrypted.size());
 
     assert(decrypted.size() == plaintext.size());
