@@ -20,6 +20,10 @@ The program ignores non-emoji input, so it's possible to insert normal text betw
 
 ## Usage
 
+### Online version
+
+https://degaart.github.io/emocrypt/
+
 ### Encrypt a file
 
 ```
