@@ -1,3 +1,4 @@
+#include <cassert>
 #include <cerrno>
 #include <common/encrypt.h>
 #include <common/fd.h>
