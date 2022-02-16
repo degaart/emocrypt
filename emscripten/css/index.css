@@ -1,0 +1,44 @@
+body {
+    background-color: teal;
+    color: magenta;
+    font-family: 'Comic Sans MS', Tahoma, Geneva, sans-serif;
+}
+
+input {
+    display: block;
+    width: 100%;
+}
+
+textarea {
+    display: block;
+    width: 100%;
+}
+
+#container {
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@keyframes marquee {
+    0%   { text-indent: 430px }
+    100% { text-indent: -485px }
+}
+
+@-webkit-keyframes marquee {
+    0%   { text-indent: 430px }
+    100% { text-indent: -485px }
+}
+
+.marquee {
+    overflow: hidden;
+    white-space: nowrap;
+    animation: marquee 17s linear infinite;
+    -webkit-animation: marquee 17s linear infinite;
+    color: blue;
+}
+
+.marquee:hover {
+    -webkit-animation-play-state: paused;
+    animation-play-state: paused;
+}

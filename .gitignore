@@ -6,3 +6,4 @@ Build
 .buildenv
 .emscripten
 Build-*
+.cache
