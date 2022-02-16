@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <fstream>
 #include <stdexcept>
+#include <string.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -32,10 +33,13 @@ namespace {
             auto ret = tty.read(&ch, sizeof(ch));
             if(!ret || ch == '\n')
                 break;
-            password.append(ch, 1);
+            
+            password.append(1, ch);
         }
 
         ec::fprint(std::cerr, "\n");
+        assert(password.find('\n') == std::string::npos);
+        
         return password;
     }
 
@@ -46,7 +50,7 @@ namespace {
             ec::fprintln(std::cerr, "Password is required");
             return false;
         }
-
+        
         std::ifstream fis;
         std::istream* is = &std::cin;
         if(infile.size()) {
@@ -172,7 +176,7 @@ int main(int argc, char** argv)
     if(opt.isPresent("outfile"))
         outfile = opt.arg("outfile");
 
-    int line_length = 80;
+    int line_length = 20;
     if(opt.isPresent("line-length"))
         line_length = std::stoi(opt.arg("line-length"));
 
