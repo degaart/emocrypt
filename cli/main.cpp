@@ -22,8 +22,6 @@
 using std::unique_ptr;
 using std::make_unique;
 
-#define DEBUG_PASSWORD
-
 namespace {
 
     static constexpr auto FLAG_APPEND_NEWLINE = 0x1;           // Append newline to outpur
@@ -158,7 +156,7 @@ namespace {
         return true;
     }
 
-    bool encrypt(const std::string& infile, const std::string& outfile, int line_length, unsigned flags)
+    bool encrypt(const std::string& infile, const std::string& outfile, const std::string& channel, int line_length, unsigned flags)
     {
         std::string password = get_password("Password: ");
         if(password.empty()) {
@@ -184,6 +182,12 @@ namespace {
             is = &fis;
         }
 
+        std::string channel_text;
+        if(!channel.empty()) {
+            ec::FD fd(channel, O_RDONLY);
+            channel_text = fd.read_all();
+        }
+
         std::string plaintext((std::istreambuf_iterator<char>(*is)),
                               std::istreambuf_iterator<char>());
         if(is->bad()) {
@@ -200,7 +204,7 @@ namespace {
         std::random_device rd;
         std::mt19937 rng(rd());
         ec::Symbols symbols = ec::load_symbols();
-        std::string encoded_ciphertext = ec::encode(rng, symbols, ciphertext.data(), ciphertext.size(), line_length);
+        std::string output = ec::encode(rng, symbols, ciphertext.data(), ciphertext.size(), line_length);
         
         std::ofstream fos;
         std::ostream* os = &std::cout;
@@ -214,17 +218,25 @@ namespace {
             os = &fos;
         }
 
+        if(!channel.empty()) {
+            output = ec::conceal(output, channel_text, symbols);
+            if(output.empty()) {
+                ec::fprintln(std::cerr, "Failed to conceal message");
+                return false;
+            }
+        }
+
         if(flags & FLAG_APPEND_NEWLINE) {
 #ifdef WIN32
-            encoded_ciphertext.append("\r\n");
+            output.append("\r\n");
 #else
-            encoded_ciphertext.append("\n");
+            output.append("\n");
 #endif
         }
-        os->write(encoded_ciphertext.data(), encoded_ciphertext.size());
+
+        os->write(output.data(), output.size());
         return true;
     }
-
 }
 
 int main(int argc, char** argv)
@@ -234,6 +246,7 @@ int main(int argc, char** argv)
     opt.add("outfile", ec::ArgType::Required, 'o');
     opt.add("decrypt", ec::ArgType::None, 'd');
     opt.add("encrypt", ec::ArgType::None, 'e');
+    opt.add("conceal", ec::ArgType::Required, 'c');
     opt.add("line-length", ec::ArgType::Required, 'l');
     opt.add("newline", ec::ArgType::None, 'n');
     opt.add("version", ec::ArgType::None, 'v');
@@ -247,6 +260,10 @@ int main(int argc, char** argv)
     std::string outfile;
     if(opt.isPresent("outfile"))
         outfile = opt.arg("outfile");
+
+    std::string channel;
+    if(opt.isPresent("conceal"))
+        channel = opt.arg("conceal");
 
     int line_length = 20;
     if(opt.isPresent("line-length"))
@@ -263,6 +280,7 @@ int main(int argc, char** argv)
         ec::fprintln(std::cerr, "  --outfile,-o       Output file (default: stdout)");
         ec::fprintln(std::cerr, "  --decrypt,-d       Decrypt");
         ec::fprintln(std::cerr, "  --encrypt,-e       Encrypt (default)");
+        ec::fprintln(std::cerr, "  --conceal,-c       Hide ciphertext by using this file as a channel");
         ec::fprintln(std::cerr, "  --line-length,-l   Line length (default: 20)");
         ec::fprintln(std::cerr, "  --newline,-n       Append a newline to output");
         ec::fprintln(std::cerr, "  --version,-v       Show program version");
@@ -273,7 +291,7 @@ int main(int argc, char** argv)
     } else if(opt.isPresent("decrypt")) {
         return !decrypt(infile, outfile, flags);
     } else {
-        return !encrypt(infile, outfile, line_length, flags);
+        return !encrypt(infile, outfile, channel, line_length, flags);
     }
     return 0;
 }

@@ -15,6 +15,8 @@ namespace ec {
     };
 
     Symbols load_symbols();
+    std::string strip_emojis(const std::string& s, const Symbols& symbols);
+    std::string conceal(const std::string& payload, std::string channel, const Symbols& symbols);
 
     std::string encode(std::mt19937& rng, const Symbols& symbols, const void* buffer, size_t size, int line_length = 0);
     byte_string decode(const Symbols& symbols, const std::string& s);

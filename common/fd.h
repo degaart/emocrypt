@@ -1,6 +1,8 @@
 #pragma once
 
+#include <iterator>
 #include <string>
+#include <algorithm>
 
 namespace ec {
 
@@ -18,6 +20,19 @@ namespace ec {
         void write(const void*, size_t);
         void close();
         int fd();
+        
+        template<typename T = std::string>
+        T read_all() {
+            T result;
+            char buffer[512];
+            while(true) {
+                auto r = read(buffer, sizeof(buffer));
+                if(r == 0)
+                    break;
+                std::copy_n(buffer, r, std::back_inserter(result));
+            }
+            return result;
+        }
     };
 
 }

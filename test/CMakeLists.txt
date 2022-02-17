@@ -7,5 +7,5 @@ endfunction()
 add_unit_test(test_utf8 test_utf8.cpp)
 add_unit_test(test_encrypt test_encrypt.cpp)
 add_unit_test(test_bitstream test_bitstream.cpp)
-
+add_unit_test(test_stego test_stego.cpp)
 

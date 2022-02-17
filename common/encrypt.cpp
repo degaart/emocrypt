@@ -1,7 +1,9 @@
 #include "encrypt.h"
 #include "format.h"
 #include "symbols.h"
+#include "utf8.h"
 #include <cassert>
+#include <regex>
 #include <sodium.h>
 
 namespace ec {
@@ -176,6 +178,81 @@ namespace ec {
                                         key.data());
         if(ret)
             return byte_string();
+        return result;
+    }
+
+    std::string strip_emojis(const std::string& s, const Symbols& symbols)
+    {
+        std::string result;
+
+        ec::utf8_iterator end(s.data() + s.size());
+        for(ec::utf8_iterator it(s.data()); it != end; ++it) {
+            if(symbols.dec.find(*it) == symbols.dec.end())
+                result.append(*it);
+        }
+        
+        return result;
+    }
+
+    std::string conceal(const std::string& payload, std::string channel, const Symbols& symbols)
+    {
+        if(payload.empty() || channel.empty())
+            return "";
+
+        std::vector<std::string> emojis;
+        {
+            ec::utf8_iterator it(payload.data());
+            ec::utf8_iterator end(payload.data() + payload.size());
+            for(; it != end; ++it) {
+                auto value = *it;
+                auto sym_it = symbols.dec.find(value);
+                if(sym_it != symbols.dec.end())
+                    emojis.push_back(value);
+            }
+        }
+        channel = strip_emojis(channel, symbols);
+
+        static std::regex rex("[^\\s]+|[\\s]+");
+        auto words_begin = std::sregex_iterator(channel.begin(), channel.end(), rex);
+        auto words_end = std::sregex_iterator();
+
+        std::vector<std::string> words;
+        for(auto i = words_begin; i != words_end; ++i) {
+            words.push_back(i->str());
+        }
+        
+        float emojis_per_word = static_cast<float>(emojis.size()) / words.size();
+        float words_per_emoji = static_cast<float>(words.size()) / emojis.size();
+        
+        std::string result;
+        float acc = 0.0f;
+        auto emoji_it = emojis.cbegin();
+        auto words_it = words.cbegin();
+        if(words_per_emoji > emojis_per_word) {
+            while(emoji_it != emojis.cend() && words_it != words.cend()) {
+                while(words_it != words.cend() && acc < words_per_emoji) {
+                    result.append(*words_it++);
+                    acc += 1.0f;
+                }
+                acc -= words_per_emoji;
+                result.append(*emoji_it++);
+            }
+        } else {
+            while(emoji_it != emojis.cend() && words_it != words.cend()) {
+                while(emoji_it != emojis.cend() && acc < emojis_per_word) {
+                    result.append(*emoji_it++);
+                    acc += 1.0f;
+                }
+                acc -= emojis_per_word;
+                result.append(*words_it++);
+            }
+        }
+        while(words_it != words.cend())
+            result.append(*words_it++);
+        
+        while(emoji_it != emojis.cend())
+            result.append(*emoji_it++);
+
         return result;
     }
 
