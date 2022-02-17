@@ -8,3 +8,4 @@ Build
 Build-*
 .cache
 .vs
+CMakeSettings.json 
