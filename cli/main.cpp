@@ -8,6 +8,7 @@
 #include <common/version.h>
 #include <fcntl.h>
 #include <fstream>
+#include <iostream>
 #include <stdexcept>
 #include <string.h>
 
@@ -21,11 +22,17 @@
 using std::unique_ptr;
 using std::make_unique;
 
+#define DEBUG_PASSWORD
+
 namespace {
+
+    static constexpr auto FLAG_APPEND_NEWLINE = 0x1;           // Append newline to outpur
 
     std::string get_password(const std::string& prompt)
     {
-#ifdef WIN32
+#ifdef DEBUG_PASSWORD
+        return "hunter2";
+#elif defined(WIN32)
         ec::fprint(std::cerr, prompt);
 
         std::string password(254, '\0');
@@ -92,7 +99,7 @@ namespace {
 #endif
     }
 
-    bool decrypt(const std::string& infile, const std::string& outfile)
+    bool decrypt(const std::string& infile, const std::string& outfile, unsigned flags)
     {
         std::string password = get_password("Password: ");
         if(password.empty()) {
@@ -139,11 +146,19 @@ namespace {
             os = &fos;
         }
 
+        if(flags & FLAG_APPEND_NEWLINE) {
+#ifdef WIN32
+            plaintext.append("\r\n");
+#else
+            plaintext.append(reinterpret_cast<const unsigned char*>("\n"));
+#endif
+        }
         os->write(reinterpret_cast<const char*>(plaintext.data()), plaintext.size());
+            
         return true;
     }
 
-    bool encrypt(const std::string& infile, const std::string& outfile, int line_length)
+    bool encrypt(const std::string& infile, const std::string& outfile, int line_length, unsigned flags)
     {
         std::string password = get_password("Password: ");
         if(password.empty()) {
@@ -198,6 +213,14 @@ namespace {
             fos.exceptions(std::ios::badbit);
             os = &fos;
         }
+
+        if(flags & FLAG_APPEND_NEWLINE) {
+#ifdef WIN32
+            encoded_ciphertext.append("\r\n");
+#else
+            encoded_ciphertext.append("\n");
+#endif
+        }
         os->write(encoded_ciphertext.data(), encoded_ciphertext.size());
         return true;
     }
@@ -212,6 +235,7 @@ int main(int argc, char** argv)
     opt.add("decrypt", ec::ArgType::None, 'd');
     opt.add("encrypt", ec::ArgType::None, 'e');
     opt.add("line-length", ec::ArgType::Required, 'l');
+    opt.add("newline", ec::ArgType::None, 'n');
     opt.add("version", ec::ArgType::None, 'v');
     opt.add("help", ec::ArgType::None, 'h');
     opt.parse(argc, argv);
@@ -228,6 +252,10 @@ int main(int argc, char** argv)
     if(opt.isPresent("line-length"))
         line_length = std::stoi(opt.arg("line-length"));
 
+    unsigned flags = 0;
+    if(opt.isPresent("newline"))
+        flags |= FLAG_APPEND_NEWLINE;
+
     if(opt.isPresent("help")) {
         ec::fprintln(std::cerr, "Usage: ", argv[0], " <options>");
         ec::fprintln(std::cerr, "Options:");
@@ -236,15 +264,16 @@ int main(int argc, char** argv)
         ec::fprintln(std::cerr, "  --decrypt,-d       Decrypt");
         ec::fprintln(std::cerr, "  --encrypt,-e       Encrypt (default)");
         ec::fprintln(std::cerr, "  --line-length,-l   Line length (default: 20)");
+        ec::fprintln(std::cerr, "  --newline,-n       Append a newline to output");
         ec::fprintln(std::cerr, "  --version,-v       Show program version");
         ec::fprintln(std::cerr, "  --help,-h          Show help");
         return 0;
     } else if(opt.isPresent("version")) {
         ec::println(argv[0], " ", ec::VERSION_MAJOR, ".", ec::VERSION_MINOR);
     } else if(opt.isPresent("decrypt")) {
-        return !decrypt(infile, outfile);
+        return !decrypt(infile, outfile, flags);
     } else {
-        return !encrypt(infile, outfile, line_length);
+        return !encrypt(infile, outfile, line_length, flags);
     }
     return 0;
 }
