@@ -209,7 +209,7 @@ int main(int argc, char** argv)
         ec::fprintln(std::cerr, "  --outfile,-o       Output file (default: stdout)");
         ec::fprintln(std::cerr, "  --decrypt,-d       Decrypt");
         ec::fprintln(std::cerr, "  --encrypt,-e       Encrypt (default)");
-        ec::fprintln(std::cerr, "  --line-length,-l   Line length (default: 80)");
+        ec::fprintln(std::cerr, "  --line-length,-l   Line length (default: 20)");
         ec::fprintln(std::cerr, "  --version,-v       Show program version");
         ec::fprintln(std::cerr, "  --help,-h          Show help");
         return 0;
