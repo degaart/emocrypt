@@ -11,7 +11,10 @@
 #include <stdexcept>
 #include <string.h>
 
-#ifndef WIN32
+#ifdef WIN32
+#   define WIN32_LEAN_AND_MEAN
+#   include <Windows.h>
+#else
 #   include <unistd.h>
 #endif
 
@@ -25,18 +28,42 @@ namespace {
 #ifdef WIN32
         ec::fprint(std::cerr, prompt);
 
-        ec::TermEcho term_echo(-1);
-        term_echo.disable();
+        std::string password(254, '\0');
+        HANDLE handle = CreateFileA(
+            "CONIN$",
+            GENERIC_READ | GENERIC_WRITE,
+            0,
+            0,
+            OPEN_EXISTING,
+            0,
+            0
+        );
 
-        // I have no idea how this will work on windows when input is redirected
-        // How to bypass stdin when reading the password?
-        // What even happens if a binary file is redirected to stdin???
-        std::string password;
-        if(!std::getline(std::cin, password)) {
-            ec::fprint(std::cerr, "\n");
-            return "";
-        }
+        DWORD orig = 0;
+        GetConsoleMode(handle, &orig);
+
+        DWORD mode = orig;
+        mode |= ENABLE_PROCESSED_INPUT;
+        mode &= ~ENABLE_ECHO_INPUT;
+        SetConsoleMode(handle, mode);
+
+        DWORD readBytes;
+        ReadConsole(
+            handle,
+            &password[0], password.size(),
+            &readBytes,
+            nullptr);
+        WriteConsole(handle, "\n", 1, 0, 0);
+        SetConsoleMode(handle, orig);
+        CloseHandle(handle);
+
+        if(readBytes >= 2)
+            password.resize(readBytes - 2);
+        else
+            password.resize(0);
+
         assert(password.find('\n') == std::string::npos);
+        assert(password.find('\r') == std::string::npos);
         ec::fprint(std::cerr, "\n");
         return password;
 #else
@@ -72,7 +99,7 @@ namespace {
             ec::fprintln(std::cerr, "Password is required");
             return false;
         }
-        
+
         std::ifstream fis;
         std::istream* is = &std::cin;
         if(infile.size()) {
@@ -112,7 +139,6 @@ namespace {
             os = &fos;
         }
 
-        plaintext.append('\n', 1);
         os->write(reinterpret_cast<const char*>(plaintext.data()), plaintext.size());
         return true;
     }
