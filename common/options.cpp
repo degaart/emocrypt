@@ -1,10 +1,10 @@
 #include "format.h"
 #include "options.h"
 #include <algorithm>
-#include <getopt.h>
 #include <map>
 #include <sstream>
 #include <vector>
+#include <getopt.h>
 
 using std::unique_ptr;
 using std::make_unique;

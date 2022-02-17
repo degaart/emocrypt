@@ -17,11 +17,16 @@ add_library(project_options INTERFACE)
 target_compile_features(project_options INTERFACE cxx_std_14)
 target_link_libraries(project_options INTERFACE libsodium::libsodium)
 
+if(WIN32)
+    target_compile_definitions(project_options INTERFACE SODIUM_STATIC)
+endif()
+
 if(ENABLE_ASAN)
     target_compile_options(project_options INTERFACE -fsanitize=address -fno-omit-frame-pointer)
     target_link_options(project_options INTERFACE -fsanitize=address -fno-omit-frame-pointer)
 endif()
 
+add_subdirectory(third-party)
 add_subdirectory(common)
 
 if(EMSCRIPTEN)

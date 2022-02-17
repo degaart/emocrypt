@@ -10,8 +10,10 @@
 #include <fstream>
 #include <stdexcept>
 #include <string.h>
-#include <termios.h>
-#include <unistd.h>
+
+#ifndef WIN32
+#   include <unistd.h>
+#endif
 
 using std::unique_ptr;
 using std::make_unique;
@@ -20,6 +22,24 @@ namespace {
 
     std::string get_password(const std::string& prompt)
     {
+#ifdef WIN32
+        ec::fprint(std::cerr, prompt);
+
+        ec::TermEcho term_echo(-1);
+        term_echo.disable();
+
+        // I have no idea how this will work on windows when input is redirected
+        // How to bypass stdin when reading the password?
+        // What even happens if a binary file is redirected to stdin???
+        std::string password;
+        if(!std::getline(std::cin, password)) {
+            ec::fprint(std::cerr, "\n");
+            return "";
+        }
+        assert(password.find('\n') == std::string::npos);
+        ec::fprint(std::cerr, "\n");
+        return password;
+#else
         ec::fprint(std::cerr, prompt);
         std::cout.flush();
 
@@ -42,6 +62,7 @@ namespace {
         assert(password.find('\n') == std::string::npos);
         
         return password;
+#endif
     }
 
     bool decrypt(const std::string& infile, const std::string& outfile)

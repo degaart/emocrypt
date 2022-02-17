@@ -9,27 +9,37 @@
 #include <regex>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 
 using std::unique_ptr;
 using std::make_unique;
 
 unique_ptr<std::string> to_utf8(char32_t codepoint)
 {
-    std::locale loc("");
-    const std::codecvt<char32_t, char, std::mbstate_t> &cvt =
-                   std::use_facet<std::codecvt<char32_t, char, std::mbstate_t>>(loc);
-
-    std::mbstate_t state{{0}};
-
-    const char32_t * last_in;
-    char *last_out;
-    char buf[4];
-    std::codecvt_base::result res = cvt.out(state, &codepoint, 1+&codepoint, last_in,
-                                            buf, buf+4, last_out);
-    if(res != std::codecvt_base::result::ok)
+    auto result = make_unique<std::string>();
+    if(codepoint <= 0x7F) {
+        result->append(1, codepoint);
+        return result;
+    } else if(codepoint <= 0x7FF) {
+        result->append(1, (codepoint >> 6) | 0xC0);
+        result->append(1, (codepoint & 0x3F) | 0x80);
+        return result;
+    } else if(codepoint > 0xD800 && codepoint <= 0xDFFF) {
         return nullptr;
-    auto sz = last_out - buf;
-    return make_unique<std::string>(buf, sz);
+    } else if(codepoint <= 0xFFFF) {
+        result->append(1, (codepoint >> 12) | 0xE0);
+        result->append(1, ((codepoint >> 6) & 0x3F) | 0x80);
+        result->append(1, (codepoint & 0x3F) | 0x80);
+        return result;
+    } else if(codepoint < 0x10FFFF) {
+        result->append(1, (codepoint >> 18) | 0xF0);
+        result->append(1, ((codepoint >> 12) & 0x3F) | 0x80);
+        result->append(1, ((codepoint >> 6) & 0x3F) | 0x80);
+        result->append(1, (codepoint & 0x3F) | 0x80);
+        return result;
+    } else {
+        return nullptr;
+    }
 }
 
 int main(int argc, char** argv)

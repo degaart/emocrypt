@@ -2,7 +2,14 @@
 #include <cerrno>
 #include <system_error>
 #include <fcntl.h>
-#include <unistd.h>
+
+#ifndef WIN32
+#   include <unistd.h>
+#else
+#   include <io.h>
+
+typedef int ssize_t;
+#endif
 
 namespace ec {
 
