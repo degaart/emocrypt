@@ -17,7 +17,8 @@ It uses XSalsa20 stream cipher with Poly1305 MAC encryption, and Argon2id key de
 
 The above ciphertext can be decrypted using the password 'hunter2'.
 The program ignores non-emoji input, so it is possible to conceal the encrypted
-message inside another text (steganography):
+message inside another text (steganography). The following output can also be
+decrypted using the password 'hunter2':
 
 ```
 I'd just like 🐃to interject for🔒 a moment. 🏨What you're refering🈵 to as
