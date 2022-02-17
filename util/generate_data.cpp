@@ -9,6 +9,7 @@
 #include <regex>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <tuple>
 
 using std::unique_ptr;
