@@ -10,3 +10,4 @@ Build-*
 .vs
 CMakeSettings.json 
 *.swp
+.clangd
