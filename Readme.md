@@ -1,24 +1,11 @@
 # emocrypt
 
-## Encrypts data into emojis
+## Encrypts data into emojipastas
 
-This program encrypts arbitrary data into an emoji soup.
+This program encrypts arbitrary data into emojipastas.
 It uses XSalsa20 stream cipher with Poly1305 MAC encryption, and Argon2id key derivation.
 
 ## Example output
-
-```
-🐲💣💩🍗😤📲🐽👹💠🔚🔝🐯🌷😾📩💎📀👍👈🆓
-🌴🍗🎇🎃😊💟📃💯🐁🐘💅🛃🎰🌟🐠🎺🍞🍫🐻🎳
-😼💰🔚💮🏠🎵🎷🎷💣😌💀🍹🚟🌷👨🕙📕🍑👋🔥
-🎫😅🎄🐳👒🆕🌰💹🐸🕝🕘🕗🐫🏯🕘🍎📝🐹👢🎭
-🛃🌲😣😢🌀🍺🔊
-```
-
-The above ciphertext can be decrypted using the password 'hunter2'.
-The program ignores non-emoji input, so it is possible to conceal the encrypted
-message inside another text (steganography). The following output can also be
-decrypted using the password 'hunter2':
 
 ```
 I'd just like 🐃to interject for🔒 a moment. 🏨What you're refering🈵 to as
@@ -45,7 +32,16 @@ basically GNU 🌺with Linux added,🌟 or GNU/Linux. 🙅All the so-called📛
 Linux distributions 📱are really distributions🔆 of GNU/Linux!🔱
 ```
 
+The above ciphertext can be decrypted using the password 'hunter2'.
+It's also possible to just encrypt into a simple emoji soup:
 
+```
+🐲💣💩🍗😤📲🐽👹💠🔚🔝🐯🌷😾📩💎📀👍👈🆓
+🌴🍗🎇🎃😊💟📃💯🐁🐘💅🛃🎰🌟🐠🎺🍞🍫🐻🎳
+😼💰🔚💮🏠🎵🎷🎷💣😌💀🍹🚟🌷👨🕙📕🍑👋🔥
+🎫😅🎄🐳👒🆕🌰💹🐸🕝🕘🕗🐫🏯🕘🍎📝🐹👢🎭
+🛃🌲😣😢🌀🍺🔊
+```
 
 ## Online version
 
