@@ -3,8 +3,6 @@
 let worker;
 
 function onLoad() {
-    /*document.getElementById("encrypt-btn").addEventListener("click", onEncrypt);
-    document.getElementById("decrypt-btn").addEventListener("click", onDecrypt);*/
     setInterval(onTimer, 1000);
     
     const channelCombo = document.getElementById("channel-combo");
@@ -65,7 +63,7 @@ function onChannelSelected(evt) {
             }
         }
         channel.value = channels[keys[Math.floor(Math.random() * keys.length)]];
-    } else {
+    } else if(evt.target.value != "custom") {
         channel.value = channels[evt.target.value];
     }
 }
