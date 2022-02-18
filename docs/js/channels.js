@@ -63,7 +63,7 @@ const channels = {
         "ORAORA ORAORA ORAORA ORAORA ORAORA ORA ORA ORA ORAORA ORA ORA ORA ORA ORA MUDA "+
         "MUDA MUDAMUDA MUDAMUDA MUDA MUDA MUDA MUDA MUDA MUDA MUDA MUDA MUDA MUDA MUDA MUDA "+
         "MUDAMUDA MUDAMUDAMUDAMUDA MUDA MUDAMUDAMUDA "+
-        "WRYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY "+
+        "WRYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY "+
         "Yo Angelo!Yo Angelo! Yo Angelo! Yo Angelo! Yo Angelo! Yo Angelo! Yo Angelo! Yo Angelo! Yo "+
         "Angelo! Yo Angelo! Yo Angelo! Yo Angelo! Yo Angelo! Yo Angelo! Yo Angelo! Yo Angelo! Yo"+
         " Angelo! Yo Angelo! Yo Angelo! Yo Angelo! Yo Angelo! Yo Angelo! Yo Angelo! Yo Angelo! Yo "+

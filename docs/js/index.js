@@ -1,55 +1,73 @@
 "use strict";
 
-var Module = {
-    onRuntimeInitialized: function() {
-        if (Module.getRandomValue === undefined) {
-            var randomValuesStandard = function() {
-                var buf = new Uint32Array(1);
-                window.crypto.getRandomValues(buf);
-                return buf[0] >>> 0;
+let worker;
+
+function onLoad() {
+    /*document.getElementById("encrypt-btn").addEventListener("click", onEncrypt);
+    document.getElementById("decrypt-btn").addEventListener("click", onDecrypt);*/
+    setInterval(onTimer, 1000);
+    
+    const channelCombo = document.getElementById("channel-combo");
+    channelCombo.addEventListener("input", onChannelSelected);
+    onChannelSelected({ target: channelCombo });
+    
+    const modeCombo = document.getElementById("mode-combo");
+    modeCombo.addEventListener("input", onModeSelected);
+    onModeSelected({ target: modeCombo });
+    
+    document.getElementById("perform-btn").disabled = true;
+    
+    document.getElementById("copy-btn").addEventListener("click", onCopy);
+    
+    if(window.Worker) {
+        if(!worker) {
+            worker = new Worker("js/worker.js");
+            worker.onmessage = (msg) => {
+                if(msg.data.type == "initialized") {
+                    document.getElementById("perform-btn").disabled = false;
+                }
             };
-            Module.getRandomValue = randomValuesStandard;
         }
-        
-        /*document.getElementById("encrypt-btn").addEventListener("click", onEncrypt);
-        document.getElementById("decrypt-btn").addEventListener("click", onDecrypt);*/
-        setInterval(onTimer, 1000);
-
-        const channelCombo = document.getElementById("channel-combo");
-        channelCombo.addEventListener("input", onChannelSelected);
-        onChannelSelected({ target: channelCombo });
-
-        const modeCombo = document.getElementById("mode-combo");
-        modeCombo.addEventListener("input", onModeSelected);
-        onModeSelected({ target: modeCombo });
+    } else {
+        alert("Your browser is tool old for this page. Use the command-line version");
     }
-};
+}
 
 function onModeSelected(evt) {
     switch(evt.target.value) {
         case "conceal":
-            document.getElementById("channel-div").style.display = "block";
-            document.getElementById("perform-btn").innerText = "Encrypt and Conceal";
-            document.getElementById("perform-btn").onclick = onConceal;
-            break;
+        document.getElementById("channel-div").style.display = "block";
+        document.getElementById("perform-btn").innerText = "Encrypt and Conceal";
+        document.getElementById("perform-btn").onclick = onConceal;
+        break;
         case "encrypt":
-            document.getElementById("channel-div").style.display = "none";
-            document.getElementById("perform-btn").innerText = "Encrypt";
-            document.getElementById("perform-btn").onclick = onEncrypt;
-            break;
+        document.getElementById("channel-div").style.display = "none";
+        document.getElementById("perform-btn").innerText = "Encrypt";
+        document.getElementById("perform-btn").onclick = onEncrypt;
+        break;
         case "decrypt":
-            document.getElementById("channel-div").style.display = "none";
-            document.getElementById("perform-btn").innerText = "Decrypt";
-            document.getElementById("perform-btn").onclick = onDecrypt;
-            break;
+        document.getElementById("channel-div").style.display = "none";
+        document.getElementById("perform-btn").innerText = "Decrypt";
+        document.getElementById("perform-btn").onclick = onDecrypt;
+        break;
     }
-
+    
     document.getElementById("output-txt").innerText = "";
 }
 
 function onChannelSelected(evt) {
     const channel = document.getElementById("channel-txt");
-    channel.value = channels[evt.target.value];
+    if(evt.target.value == "random") {
+        let keys = [];
+        for(let key in channels) {
+            if(channels.hasOwnProperty(key) && key != "custom") {
+                keys.push(key);
+            }
+        }
+        channel.value = channels[keys[Math.floor(Math.random() * keys.length)]];
+    } else {
+        channel.value = channels[evt.target.value];
+    }
 }
 
 function onTimer() {
@@ -58,6 +76,36 @@ function onTimer() {
     text.style.visibility = "hidden";
     else
     text.style.visibility = "";
+}
+
+function onCopy() {
+    const text = document.getElementById("output-txt").innerText;
+    if (!navigator.clipboard) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.position = "fixed";
+        
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand("copy");
+            const msg = successful ? "successful" : "unsuccessful";
+        } catch (err) {
+            console.error(err);
+        }
+        
+        document.body.removeChild(textArea);
+    } else {
+        navigator.clipboard.writeText(text).then(function() {
+            /* Do nothing */
+        }, function(err) {
+            console.error(err);
+        });
+    }
 }
 
 function onConceal() {
@@ -77,11 +125,31 @@ function onConceal() {
         return;
     }
     
-    const result = Module.ec_conceal(password, input, channel);
-    if(result && result.length > 0)
-        document.getElementById("output-txt").innerText = result;
-    else
-        alert("Encryption failed");
+    const performBtn = document.getElementById("perform-btn");
+    const oldText = performBtn.innerText;
+    performBtn.disabled = true;
+    performBtn.innerText = "Reticulating splines...";
+    worker.onmessage = (msg) => {
+        if(msg.data.type == "result") {
+            if(msg.data.result.length == 0) {
+                alert("Encryption failed");
+            } else {
+                document.getElementById("output-txt").innerText = msg.data.result;
+            }
+        } else {
+            alert("An unknown error occured");
+            console.error("msg:", msg.data);
+        }
+        performBtn.disabled = false;
+        performBtn.innerText = oldText;
+        onChannelSelected({ target: document.getElementById("channel-combo") });
+    };
+    worker.postMessage({
+        mode: "conceal",
+        password: password,
+        plaintext: input,
+        channel: channel
+    });
 }
 
 function onEncrypt() {
@@ -97,11 +165,29 @@ function onEncrypt() {
         return;
     }
     
-    const result = Module.ec_encrypt(password, input);
-    if(result && result.length > 0)
-        document.getElementById("output-txt").innerText = result;
-    else
-        alert("Encryption failed");
+    const performBtn = document.getElementById("perform-btn");
+    const oldText = performBtn.innerText;
+    performBtn.disabled = true;
+    performBtn.innerText = "Reticulating splines...";
+    worker.onmessage = (msg) => {
+        if(msg.data.type == "result") {
+            if(msg.data.result.length == 0) {
+                alert("Encryption failed");
+            } else {
+                document.getElementById("output-txt").innerText = msg.data.result;
+            }
+        } else {
+            alert("An unknown error occured");
+            console.error("msg:", msg.data);
+        }
+        performBtn.disabled = false;
+        performBtn.innerText = oldText;
+    };
+    worker.postMessage({
+        mode: "encrypt",
+        password: password,
+        plaintext: input
+    });
 }
 
 function onDecrypt() {
@@ -117,9 +203,29 @@ function onDecrypt() {
         return;
     }
     
-    const result = Module.ec_decrypt(password, input);
-    if(result && result.length > 0)
-        document.getElementById("output-txt").innerText = result;
-    else
-        alert("Decryption failed");
+    const performBtn = document.getElementById("perform-btn");
+    const oldText = performBtn.innerText;
+    performBtn.disabled = true;
+    performBtn.innerText = "Reticulating splines...";
+    worker.onmessage = (msg) => {
+        if(msg.data.type == "result") {
+            if(msg.data.result.length == 0) {
+                alert("Wrong password (or invalid encrypted text)");
+            } else {
+                document.getElementById("output-txt").innerText = msg.data.result;
+            }
+        } else {
+            alert("An unknown error occured");
+            console.error("msg:", msg.data);
+        }
+        performBtn.disabled = false;
+        performBtn.innerText = oldText;
+    };
+    worker.postMessage({
+        mode: "decrypt",
+        password: password,
+        ciphertext: input
+    });
 }
+
+window.addEventListener("load", onLoad);

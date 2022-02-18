@@ -2,7 +2,7 @@
 <html>
 <head>
   <title>emocrypt</title>
-  <script src="emocrypt.js"></script>
+  <!-- <script src="emocrypt.js"></script> -->
   <script type="text/javascript" src="js/channels.js"></script>
   <script type="text/javascript" src="js/marquee.js"></script>
   <script type="text/javascript" src="js/index.js"></script>
@@ -42,6 +42,7 @@
     <div class="form-row" id="channel-div">
       <label class="fullwidth" id="channel-lbl">Hide into:</label>
       <select id="channel-combo">
+        <option value="random">Random</option>
         <option value="custom">Custom</option>
         <option value="a-very-particular">A very particular set of skills</option>
         <option value="c++">C++</option>
@@ -55,7 +56,8 @@
     </div>
 
     <div class="form-row">
-      <label class="fullwidth" id="output-lbl">Output:</label>
+      <label id="output-lbl">Output:</label>
+      <button type="button" id="copy-btn">Copy to clipboard</button>
       <pre id="output-txt" class="fullwidth"></pre>
     </div>
 
