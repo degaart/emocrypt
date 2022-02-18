@@ -146,7 +146,7 @@ namespace {
 
         if(flags & FLAG_APPEND_NEWLINE) {
 #ifdef WIN32
-            plaintext.append("\r\n");
+            plaintext.append(reinterpret_cast<const unsigned char*>("\r\n"));
 #else
             plaintext.append(reinterpret_cast<const unsigned char*>("\n"));
 #endif
