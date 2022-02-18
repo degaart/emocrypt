@@ -96,6 +96,6 @@ cmake --build Build --target install
 - Open libsodium.sln and build the Debug (or the Release) configuration
 - Open emocrypt's source code folder in Visual Studio
 - Open menu: Project > CMake Settings for emocrypt
-- Add the path to libsodium in "CMake command arguments": ```-Dlibsodium_INCLUDE_DIR=D:\some-path\libsodium\include -Dlibsodium_LIBRARY=C:\some-path\libsodium-stable\Build\Debug\x64\libsodium.lib```
+- Tweak "CMake command arguments": ```-Dlibsodium_INCLUDE_DIR=C:\some-path\libsodium\include -Dlibsodium_LIBRARY=C:\some-path\libsodium-stable\Build\Debug\x64\libsodium.lib -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded```
 - Build the solution
 
