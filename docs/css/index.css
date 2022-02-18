@@ -4,14 +4,33 @@ body {
     font-family: 'Comic Sans MS', Tahoma, Geneva, sans-serif;
 }
 
-input {
+#title-text {
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#output-txt {
+    border-style: solid;
+    border-width: thin;
+    border-color: greenyellow;
+    padding: 7px 7px 7px 7px;
+    white-space: normal;
+    color: yellow;
+}
+
+.fullwidth {
     display: block;
     width: 100%;
 }
 
-textarea {
-    display: block;
-    width: 100%;
+.halfwidth {
+    width: 49%;
+}
+
+.form-row {
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 #container {
@@ -22,12 +41,12 @@ textarea {
 
 @keyframes marquee {
     0%   { text-indent: 430px }
-    100% { text-indent: -485px }
+    100% { text-indent: -685px }
 }
 
 @-webkit-keyframes marquee {
     0%   { text-indent: 430px }
-    100% { text-indent: -485px }
+    100% { text-indent: -685px }
 }
 
 .marquee {

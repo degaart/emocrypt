@@ -2,26 +2,66 @@
 <html>
 <head>
   <title>emocrypt</title>
-  <script type="text/javascript" src="js/index.js"></script>
   <script src="emocrypt.js"></script>
+  <script type="text/javascript" src="js/channels.js"></script>
+  <script type="text/javascript" src="js/marquee.js"></script>
+  <script type="text/javascript" src="js/index.js"></script>
   <link href="css/index.css" rel="stylesheet">
 </head>
 <body>
   <div id="container">
     <h1 id="title-text">emocrypt</h1>
-    <p class="marquee">Encrypt text into an emoji soup</p>
+    <p class="marquee">
+      Encrypt text into an emoji soup
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      HELP! I cannot center the above text and margin-right:auto; margin-left: auto does not work!!!
+    </p>
+
+    <div>
+      <label>Mode:</label>
+      <select id="mode-combo">
+        <option value="conceal">Encrypt and conceal</option>
+        <option value="encrypt">Encrypt</option>
+        <option value="decrypt">Decrypt</option>
+      </select>
+    </div>
     
-    <label>Password:</label>
-    <input type="password" id="password-txt" size="47">
+    <div class="form-row">
+      <label class="fullwidth">Password:</label>
+      <input type="password" id="password-txt" size="47" class="fullwidth">
+    </div>
     
-    <label>Input:</label>
-    <textarea id="input-txt" rows="15" cols="50"></textarea>
-    
-    <label>Output:</label>
-    <textarea id="output-txt" rows="15" cols="50"></textarea>
-    
-    <button type="button" id="encrypt-btn">Encrypt</button>
-    <button type="button" id="decrypt-btn">Decrypt</button>
+    <div class="form-row">
+      <label class="fullwidth" id="input-lbl">Input:</label>
+      <textarea id="input-txt" rows="15" class="fullwidth"></textarea>
+    </div>
+
+    <div class="form-row" id="channel-div">
+      <label class="fullwidth" id="channel-lbl">Hide into:</label>
+      <select id="channel-combo">
+        <option value="custom">Custom</option>
+        <option value="a-very-particular">A very particular set of skills</option>
+        <option value="c++">C++</option>
+        <option value="darth-plagueis">Darth Plagueis</option>
+        <option value="gnu-linux">GNU/Linux</option>
+        <option value="jojo-reference">Jojo reference</option>
+        <option value="navy-seal">Navy seal</option>
+        <option value="rick-and-morty">Rick & morty</option>
+      </select>
+      <textarea id="channel-txt" rows="15" class="fullwidth"></textarea>
+    </div>
+
+    <div class="form-row">
+      <label class="fullwidth" id="output-lbl">Output:</label>
+      <pre id="output-txt" class="fullwidth"></pre>
+    </div>
+
+    <div class="form-row">
+      <button type="button" id="perform-btn" class="fullwidth">Perform</button>
+    </div>
 
     <p>
       This page will encrypt/decrypt your text locally in your browser
@@ -41,7 +81,14 @@
     <p>Source code: <a href="https://github.com/degaart/emocrypt">https://github.com/degaart/emocrypt</a></p>
   </div>
 
-  <!-- Matomo Image Tracker-->
+  <!--
+      Matomo Image Tracker
+
+      Only user agent and date of visit is tracked.
+      IP addresses are anonymized.
+      I'm not tracking you (I frankly don't care who you are), I just need to evaluate the number of visits.
+      If you need more privacy, just block the analytics domain, which is already done by default if you're using an ad blocker anyway.
+  -->
   <img referrerpolicy="no-referrer-when-downgrade" src="https://analytics.zorro.ovh/matomo.php?idsite=1&amp;rec=1" style="border:0" alt="" />
   <!-- End Matomo -->
 </body>
