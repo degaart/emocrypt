@@ -97,12 +97,15 @@ namespace {
 #endif
     }
 
-    bool decrypt(const std::string& infile, const std::string& outfile, unsigned flags)
+    bool decrypt(const std::string& infile, const std::string& outfile, const std::string& supplied_password, unsigned flags)
     {
-        std::string password = get_password("Password: ");
+        std::string password = supplied_password;
         if(password.empty()) {
-            ec::fprintln(std::cerr, "Password is required");
-            return false;
+            password = get_password("Password: ");
+            if(password.empty()) {
+                ec::fprintln(std::cerr, "Password is required");
+                return false;
+            }
         }
 
         std::ifstream fis;
@@ -156,18 +159,21 @@ namespace {
         return true;
     }
 
-    bool encrypt(const std::string& infile, const std::string& outfile, const std::string& channel, int line_length, unsigned flags)
+    bool encrypt(const std::string& infile, const std::string& outfile, const std::string& supplied_password, const std::string& channel, int line_length, unsigned flags)
     {
-        std::string password = get_password("Password: ");
+        std::string password = supplied_password;
         if(password.empty()) {
-            ec::fprintln(std::cerr, "Password is required");
-            return false;
-        }
-
-        std::string confirmation = get_password("Confirmation: ");
-        if(confirmation != password) {
-            ec::fprintln(std::cerr, "Password and confirmation do not match");
-            return false;
+            password = get_password("Password: ");
+            if(password.empty()) {
+                ec::fprintln(std::cerr, "Password is required");
+                return false;
+            }
+        
+            std::string confirmation = get_password("Confirmation: ");
+            if(confirmation != password) {
+                ec::fprintln(std::cerr, "Password and confirmation do not match");
+                return false;
+            }
         }
 
         std::ifstream fis;
@@ -246,6 +252,7 @@ int main(int argc, char** argv)
     opt.add("outfile", ec::ArgType::Required, 'o');
     opt.add("decrypt", ec::ArgType::None, 'd');
     opt.add("encrypt", ec::ArgType::None, 'e');
+    opt.add("password", ec::ArgType::Required, 'p');
     opt.add("conceal", ec::ArgType::Required, 'c');
     opt.add("line-length", ec::ArgType::Required, 'l');
     opt.add("newline", ec::ArgType::None, 'n');
@@ -264,6 +271,10 @@ int main(int argc, char** argv)
     std::string channel;
     if(opt.isPresent("conceal"))
         channel = opt.arg("conceal");
+    
+    std::string password;
+    if(opt.isPresent("password"))
+        password = opt.arg("password");
 
     int line_length = 20;
     if(opt.isPresent("line-length"))
@@ -280,6 +291,7 @@ int main(int argc, char** argv)
         ec::fprintln(std::cerr, "  --outfile,-o       Output file (default: stdout)");
         ec::fprintln(std::cerr, "  --decrypt,-d       Decrypt");
         ec::fprintln(std::cerr, "  --encrypt,-e       Encrypt (default)");
+        ec::fprintln(std::cerr, "  --password,-p      Specify password (DANGEROUS!)");
         ec::fprintln(std::cerr, "  --conceal,-c       Hide ciphertext by using this file as a channel");
         ec::fprintln(std::cerr, "  --line-length,-l   Line length (default: 20)");
         ec::fprintln(std::cerr, "  --newline,-n       Append a newline to output");
@@ -289,9 +301,9 @@ int main(int argc, char** argv)
     } else if(opt.isPresent("version")) {
         ec::println(argv[0], " ", ec::VERSION_MAJOR, ".", ec::VERSION_MINOR);
     } else if(opt.isPresent("decrypt")) {
-        return !decrypt(infile, outfile, flags);
+        return !decrypt(infile, outfile, password, flags);
     } else {
-        return !encrypt(infile, outfile, channel, line_length, flags);
+        return !encrypt(infile, outfile, password, channel, line_length, flags);
     }
     return 0;
 }
